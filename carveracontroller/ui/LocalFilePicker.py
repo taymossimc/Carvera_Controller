@@ -68,6 +68,9 @@ if "LocalFilePickerSheet" not in Factory.classes:
 
 
 def home_directory() -> str:
+    jobs = Utils.jobs_directory()
+    if jobs:
+        return jobs
     try:
         home = os.path.expanduser("~")
         return home if os.path.isdir(home) else os.getcwd()

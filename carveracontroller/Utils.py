@@ -674,6 +674,14 @@ def request_android_permissions():
         logger.error("Error requesting permissions: %s", e)
 
 
+def jobs_directory():
+    """Return CARVERA_JOBS_DIR when it points at an existing directory."""
+    path = os.environ.get("CARVERA_JOBS_DIR", "").strip()
+    if path and os.path.isdir(path):
+        return os.path.abspath(path)
+    return ""
+
+
 def common_local_directories():
     """Return standard local folder shortcuts (home, Documents, drives, ...)."""
     import logging
@@ -686,6 +694,9 @@ def common_local_directories():
 
     logger = logging.getLogger(__name__)
     entries = []
+    jobs = jobs_directory()
+    if jobs:
+        entries.append({"name": tr._("Jobs"), "path": jobs, "icon": "data/folder-documents.png"})
     home_path = Path.home()
     if home_path.exists():
         entries.append(
@@ -743,7 +754,10 @@ def load_recent_local_directories(*, seed_if_empty=True):
                     dirs.append(folder)
 
     if seed_if_empty and not dirs:
-        if kivy_platform == "android":
+        jobs = jobs_directory()
+        if jobs:
+            default = jobs
+        elif kivy_platform == "android":
             default = str(os.path.abspath("carveracontroller/gcodes"))
         else:
             default = str(os.path.abspath("./gcodes"))

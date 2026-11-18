@@ -6449,8 +6449,28 @@ class Makera(RelativeLayout):
                 elif self.wpb_leveling.value > 0:
                     self.wpb_leveling.value = 84
 
+            self._publish_job_state(app)
+
         except:
             logger.error(sys.exc_info()[1])
+
+    # -----------------------------------------------------------------------
+    def _publish_job_state(self, app):
+        """Tell sidecar services which file is playing. Failures stay off the UI path."""
+        try:
+            from carveracontroller.jobstate import publish
+
+            remote = app.selected_remote_filename or ""
+            local = app.selected_local_filename or ""
+            publish(
+                state=str(app.state),
+                playing=bool(app.playing),
+                file=os.path.basename(remote or local),
+                remote_path=remote,
+                local_path=local,
+            )
+        except Exception:
+            logger.error("job-state publish failed", exc_info=True)
 
     # -----------------------------------------------------------------------
     def updateDiagnose(self, *args):
@@ -8228,6 +8248,12 @@ class MakeraApp(App):
     safe_area_padding = ListProperty([0, 0, 0, 0])
 
     def on_stop(self):
+        try:
+            from carveracontroller.jobstate import publish
+
+            publish(state="stopped", playing=False, file="", remote_path="", local_path="")
+        except Exception:
+            pass
         # Cancel any ongoing reconnection attempts to prevent hanging
         if hasattr(self.root, "controller") and self.root.controller:
             self.root.controller.cancel_reconnection()
