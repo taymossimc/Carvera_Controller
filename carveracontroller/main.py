@@ -8276,6 +8276,12 @@ class MakeraApp(App):
         return Makera(ctl_version=__version__)
 
     def on_start(self):
+        try:
+            from carveracontroller.jobstate import publish
+
+            publish(state="N/A", playing=False, file="", remote_path="", local_path="")
+        except Exception:
+            pass
         # Workaround for Android blank screen issue
         # https://github.com/kivy/python-for-android/issues/2720
         viewport_update_count = 0
